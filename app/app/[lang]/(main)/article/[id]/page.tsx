@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { supabase } from '../../../../lib/supabase'
+import { publishedArticlesFrom, type ArticleRow } from '../../../../lib/articleQueries'
 import { getDisplayViews } from '../../../../lib/viewUtils'
 import ArticleClient from './ArticleClient'
 
@@ -66,8 +67,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ lang: 
   }
   
   if (article) {
-    // 3. If the fetched article's language matches the requested language, we are good.
-    if (article.language !== lang) {
+    const articleLang = article.language ?? "en";
+    if (articleLang !== lang) {
        // 4. Mismatch. We need to find the version in 'lang'.
        
        // Case A: The fetched article is the "original" (e.g. English), and we want a translation.
@@ -131,18 +132,13 @@ export default async function ArticlePage({ params }: { params: Promise<{ lang: 
     view_count: getDisplayViews(article.created_at, article.view_count)
   }
 
-  // Fetch related
-  const { data: related } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('category', article.category)
-    .neq('id', article.id)
-    .eq('published', true)
-    .eq('language', lang)
-    .order('created_at', { ascending: false })
+  const { data: related } = await publishedArticlesFrom(supabase, lang, "*")
+    .eq("category", article.category)
+    .neq("id", article.id)
+    .order("created_at", { ascending: false })
     .limit(4)
 
-  const formattedRelated = (related || []).map(a => ({
+  const formattedRelated = (related || []).map((a: ArticleRow) => ({
     id: a.slug || a.id,
     title: a.title,
     excerpt: a.excerpt,
@@ -151,17 +147,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ lang: 
     category: a.category
   }))
 
-  // Fetch featured
-  const { data: featured } = await supabase
-    .from('articles')
-    .select('*')
-    .neq('id', article.id)
-    .eq('published', true)
-    .eq('language', lang)
-    .order('created_at', { ascending: false })
+  const { data: featured } = await publishedArticlesFrom(supabase, lang, "*")
+    .neq("id", article.id)
+    .order("created_at", { ascending: false })
     .limit(4)
 
-  const formattedFeatured = (featured || []).map(a => ({
+  const formattedFeatured = (featured || []).map((a: ArticleRow) => ({
     id: a.slug || a.id,
     title: a.title,
     cover_image: a.cover_image || 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=1600',

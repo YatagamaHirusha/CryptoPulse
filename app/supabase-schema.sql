@@ -171,7 +171,7 @@ SECURITY DEFINER
 AS $$
 BEGIN
   UPDATE articles
-  view_count = view_count + 1
+  SET view_count = view_count + 1
   WHERE id = article_id;
 END;
 $$;

@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { publishedArticlesFrom } from '../../lib/articleQueries';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import CryptoTicker from '../../components/CryptoTicker';
@@ -12,14 +13,15 @@ export default async function MainLayout({
 }) {
   const { lang } = await params;
 
-  // Fetch active categories
-  const { data: categories } = await supabase
-    .from('articles')
-    .select('category')
-    .eq('published', true)
-    .eq('language', lang);
+  const { data: categories } = await publishedArticlesFrom(supabase, lang, "category");
 
-  const activeCategories = Array.from(new Set(categories?.map(c => c.category.toLowerCase()) || []));
+  const activeCategories: string[] = Array.from(
+    new Set(
+      (categories ?? [])
+        .map((c: { category?: string | null }) => c.category?.toLowerCase())
+        .filter((c: string | undefined): c is string => Boolean(c))
+    )
+  );
 
   return (
     <>

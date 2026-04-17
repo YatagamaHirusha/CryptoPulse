@@ -391,7 +391,7 @@ export default function ArticleClient({ article, relatedArticles, featuredArticl
                           </div>
                           <div>
                             <h3 className="font-bold text-slate-900 dark:text-white text-sm">{t.askAi}</h3>
-                            <p className="text-[10px] text-slate-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Powered by Groq</p>
+                            <p className="text-[10px] text-slate-500 dark:text-zinc-500 uppercase tracking-wider font-medium">Powered by ElizaOS</p>
                           </div>
                         </div>
                       </div>

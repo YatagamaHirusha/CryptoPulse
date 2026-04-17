@@ -1,4 +1,7 @@
 import { supabase } from '../../lib/supabase';
+import { publishedArticlesFrom, type ArticleRow } from '../../lib/articleQueries';
+import type { Article } from '../../components/ArticleCard';
+import { getDisplayViews } from '../../lib/viewUtils';
 import HeroSection from '../../components/HeroSection';
 import CategorySection from '../../components/CategorySection';
 import TopStoriesSection from '../../components/TopStoriesSection';
@@ -13,6 +16,7 @@ import { PODCASTS } from '../../lib/podcasts';
 import { Metadata } from 'next';
 
 export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
@@ -34,28 +38,31 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
     // Fallback or 404 could go here
   }
 
-  const { data: articles } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('published', true)
-    .eq('language', lang) // Filter by language
-    .order('created_at', { ascending: false })
+  const { data: articles, error: articlesError } = await publishedArticlesFrom(supabase, lang, "*")
+    .order("created_at", { ascending: false })
     .limit(50);
 
-  const formattedArticles = articles?.map(article => ({
-    id: article.id,
-    title: article.title,
-    excerpt: article.excerpt || '',
-    cover_image: article.cover_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1600',
-    created_at: article.created_at,
-    author: {
-      name: article.author_name || 'Unknown Author',
-      avatar: article.author_avatar || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=100',
-      role: article.author_role
-    },
-    category: article.category,
-    slug: article.slug
-  })) || [];
+  if (articlesError) {
+    console.error("[Home] articles query:", articlesError.message);
+  }
+
+  const formattedArticles: Article[] =
+    (articles?.map((article: ArticleRow) => ({
+      id: article.id,
+      title: article.title,
+      excerpt: article.excerpt || '',
+      cover_image: article.cover_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1600',
+      created_at: article.created_at,
+      author: {
+        name: article.author_name || 'Unknown Author',
+        avatar: article.author_avatar || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=100',
+        role: article.author_role ?? undefined
+      },
+      category: article.category || "News",
+      slug: article.slug ?? undefined,
+      likes_count: article.likes_count ?? 0,
+      views_count: getDisplayViews(article.created_at, article.view_count)
+    })) ?? []);
 
   const allArticles = formattedArticles;
 
@@ -69,10 +76,12 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
   for (const cat of preferredCategories) {
     if (bottomSections.length >= 4) break;
     
-    const catArticles = allArticles.filter(a => 
-      (a.category.toLowerCase() === cat.toLowerCase() || 
-      (cat === 'Gaming' && a.category.toLowerCase().includes('gam')))
-    );
+    const catArticles = allArticles.filter((a) => {
+      const ac = a.category?.toLowerCase() ?? '';
+      return (
+        ac === cat.toLowerCase() || (cat === 'Gaming' && ac.includes('gam'))
+      );
+    });
     
     if (catArticles.length > 0) {
       bottomSections.push({
@@ -163,12 +172,12 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
               tabs={[
                 {
                   label: 'Bitcoin',
-                  articles: allArticles.filter(a => a.category.toLowerCase() === 'bitcoin').slice(0, 4),
+                  articles: allArticles.filter((a) => a.category?.toLowerCase() === 'bitcoin').slice(0, 4),
                   viewAllLink: `/${lang}/bitcoin`
                 },
                 {
                   label: 'Ethereum',
-                  articles: allArticles.filter(a => a.category.toLowerCase() === 'ethereum').slice(0, 4),
+                  articles: allArticles.filter((a) => a.category?.toLowerCase() === 'ethereum').slice(0, 4),
                   viewAllLink: `/${lang}/ethereum`
                 }
               ]}

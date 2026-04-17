@@ -69,7 +69,7 @@ export function calculateFakeViews(createdAt: string): number {
  * This ensures articles always show reasonable view counts even if
  * the backfill job hasn't run recently.
  */
-export function getDisplayViews(createdAt: string, dbViewCount: number): number {
+export function getDisplayViews(createdAt: string, dbViewCount: number | null | undefined): number {
   const calculatedViews = calculateFakeViews(createdAt);
-  return Math.max(dbViewCount || 0, calculatedViews);
+  return Math.max(dbViewCount ?? 0, calculatedViews);
 }

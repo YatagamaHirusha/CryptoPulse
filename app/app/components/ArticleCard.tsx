@@ -4,7 +4,7 @@ import { Clock } from 'lucide-react';
 import { formatTimeAgo } from '../lib/dateUtils';
 import slugify from 'slugify';
 
-interface Article {
+export interface Article {
   id: string;
   slug?: string;
   title: string;
@@ -39,8 +39,8 @@ export default function ArticleCard({ article, featured = false, lang = 'en' }: 
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
           </div>
           <div className="absolute bottom-0 left-0 p-8 w-full md:w-3/4 pointer-events-auto">
-            <Link href={`/${lang}/${article.category.toLowerCase()}`} className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold uppercase tracking-wider mb-4 rounded-sm hover:bg-blue-700 transition-colors relative z-10">
-              {article.category}
+            <Link href={`/${lang}/${(article.category ?? 'news').toLowerCase()}`} className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold uppercase tracking-wider mb-4 rounded-sm hover:bg-blue-700 transition-colors relative z-10">
+              {article.category ?? 'News'}
             </Link>
             <Link href={`/${lang}/article/${article.slug || article.id}`} className="block">
               <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-4 leading-tight group-hover:text-blue-400 transition-colors">

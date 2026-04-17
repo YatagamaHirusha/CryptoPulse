@@ -1,4 +1,6 @@
 import { supabase } from '../../../../lib/supabase';
+import { filterArticlesByLocale, type ArticleRow } from '../../../../lib/articleQueries';
+import type { Article } from '../../../../components/ArticleCard';
 import { getDisplayViews } from '../../../../lib/viewUtils';
 import { TRANSLATIONS } from '../../../../lib/translations';
 import ArticleCard from '../../../../components/ArticleCard';
@@ -33,13 +35,13 @@ async function getProfile(slug: string) {
 async function getAuthorArticles(authorId: string, lang: string, page: number = 1) {
   const offset = (page - 1) * ARTICLES_PER_PAGE;
   
-  const { data, count, error } = await supabase
-    .from('articles')
-    .select('*', { count: 'exact' })
-    .eq('author_id', authorId)
-    .eq('published', true)
-    .eq('language', lang)
-    .order('created_at', { ascending: false })
+  const base = supabase
+    .from("articles")
+    .select("*", { count: "exact" })
+    .eq("author_id", authorId)
+    .eq("published", true);
+  const { data, count, error } = await filterArticlesByLocale(base, lang)
+    .order("created_at", { ascending: false })
     .range(offset, offset + ARTICLES_PER_PAGE - 1);
 
   if (error) return { data: [], count: 0 };
@@ -84,7 +86,7 @@ export default async function AuthorPage({ params, searchParams }: Props) {
   const totalPages = Math.ceil(count / ARTICLES_PER_PAGE);
 
   // Format articles for ArticleCard
-  const formattedArticles = articles.map(article => ({
+  const formattedArticles: Article[] = articles.map((article: ArticleRow) => ({
     id: article.id,
     title: article.title,
     excerpt: article.excerpt || '',
@@ -96,7 +98,8 @@ export default async function AuthorPage({ params, searchParams }: Props) {
     },
     likes_count: 0, // Placeholder
     views_count: getDisplayViews(article.created_at, article.view_count),
-    category: article.category
+    category: article.category || "News",
+    slug: article.slug ?? undefined,
   }));
 
   return (

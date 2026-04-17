@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabase';
+import { publishedArticlesFrom, type ArticleRow } from '../../../lib/articleQueries';
 import { getDisplayViews } from '../../../lib/viewUtils';
 import ArticleCard from '../../../components/ArticleCard';
 import Pagination from '../../../components/Pagination';
@@ -131,59 +132,66 @@ export default async function CategoryPage({
   const currentPage = Number(search.page) || 1;
   const offset = (currentPage - 1) * ARTICLES_PER_PAGE;
 
-  // Get total count for this category
-  const { count } = await supabase
-    .from('articles')
-    .select('*', { count: 'exact', head: true })
-    .eq('published', true)
-    .eq('language', lang) // Filter by language
-    .ilike('category', dbCategoryQuery);
+  const { count } = await publishedArticlesFrom(supabase, lang, "*", {
+    count: "exact",
+    head: true,
+  }).ilike("category", dbCategoryQuery);
 
   const totalPages = Math.ceil((count || 0) / ARTICLES_PER_PAGE);
 
-  // Get articles for current page (filtered by category)
-  const { data: articles } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('published', true)
-    .eq('language', lang) // Filter by language
-    .ilike('category', dbCategoryQuery)
-    .order('created_at', { ascending: false })
+  const { data: articles } = await publishedArticlesFrom(supabase, lang, "*")
+    .ilike("category", dbCategoryQuery)
+    .order("created_at", { ascending: false })
     .range(offset, offset + ARTICLES_PER_PAGE - 1);
 
-  // Get featured articles (from any category, most recent)
-  const { data: featuredArticles } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('published', true)
-    .eq('language', lang)
-    .order('created_at', { ascending: false })
-    .limit(5);
+  const { data: featuredArticles } = await publishedArticlesFrom(supabase, lang, "*").order(
+    "created_at",
+    { ascending: false }
+  ).limit(5);
 
-  const formattedArticles = articles?.map(article => ({
+  const formattedArticles =
+    (articles?.map((article: ArticleRow) => ({
+      id: article.id,
+      title: article.title,
+      excerpt: article.excerpt || '',
+      cover_image: article.cover_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1600',
+      created_at: article.created_at,
+      author: {
+        name: article.author_name || 'Unknown Author',
+        avatar: article.author_avatar || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=100'
+      },
+      category: article.category || "News",
+      slug: article.slug ?? undefined,
+      likes_count: article.likes_count || 0,
+      views_count: getDisplayViews(article.created_at, article.view_count)
+    })) ?? []) as Array<{
+      id: string;
+      title: string;
+      excerpt: string;
+      cover_image: string;
+      created_at: string;
+      author: { name: string; avatar: string };
+      category: string;
+      slug?: string;
+      likes_count: number;
+      views_count: number;
+    }>;
+
+  const formattedFeatured = (featuredArticles?.map((article: ArticleRow) => ({
     id: article.id,
     title: article.title,
-    excerpt: article.excerpt || '',
-    cover_image: article.cover_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1600',
-    created_at: article.created_at,
-    author: {
-      name: article.author_name || 'Unknown Author',
-      avatar: article.author_avatar || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=100'
-    },
-    category: article.category,
-    slug: article.slug,
-    likes_count: article.likes_count || 0,
-    views_count: getDisplayViews(article.created_at, article.view_count)
-  })) || [];
-
-  const formattedFeatured = featuredArticles?.map(article => ({
-    id: article.id,
-    title: article.title,
     cover_image: article.cover_image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=1600',
     created_at: article.created_at,
     category: article.category,
     slug: article.slug,
-  })) || [];
+  })) ?? []) as Array<{
+    id: string;
+    title: string;
+    cover_image: string;
+    created_at: string;
+    category?: string | null;
+    slug?: string | null;
+  }>;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

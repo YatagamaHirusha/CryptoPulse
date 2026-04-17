@@ -17,20 +17,24 @@ export default function CryptoTicker() {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        // Fetch cryptocurrencies
-        const cryptoRes = await fetch(
-          'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,ripple,cardano,polkadot,dogecoin,litecoin,chainlink,avalanche-2&order=market_cap_desc&per_page=10&page=1&sparkline=false'
-        );
+        // Same-origin API route proxies CoinGecko (avoids browser "Failed to fetch" / ad-blockers)
+        const cryptoRes = await fetch("/api/crypto-ticker", { cache: "no-store" });
+        if (!cryptoRes.ok) {
+          console.warn("Crypto ticker API:", cryptoRes.status);
+          return;
+        }
         const cryptoData = await cryptoRes.json();
+        if (!Array.isArray(cryptoData) || cryptoData.length === 0) return;
         
-        // Format crypto data
-        const formattedCrypto: AssetData[] = cryptoData.map((coin: any) => ({
-          id: coin.id,
-          symbol: coin.symbol,
-          current_price: coin.current_price,
-          price_change_percentage_24h: coin.price_change_percentage_24h,
-          type: 'crypto'
-        }));
+        const formattedCrypto: AssetData[] = cryptoData
+          .filter((coin: { current_price?: number }) => (coin.current_price ?? 0) > 0)
+          .map((coin: any) => ({
+            id: coin.id,
+            symbol: coin.symbol,
+            current_price: coin.current_price,
+            price_change_percentage_24h: coin.price_change_percentage_24h ?? 0,
+            type: "crypto" as const,
+          }));
 
         // Fetch stock data from a free API (using finnhub or similar)
         // For now, we'll use mock stock data, or you can integrate with a real stock API
