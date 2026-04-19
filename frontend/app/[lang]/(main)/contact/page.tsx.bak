@@ -1,0 +1,288 @@
+'use client';
+
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { supabase } from '../../../lib/supabase';
+import { Check, AlertCircle, Loader2, Phone, Mail, MapPin } from 'lucide-react';
+import PartnerBanner from '../../../components/PartnerBanner';
+
+export default function ContactPage() {
+  const params = useParams();
+  const lang = params.lang as string || 'en';
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    department: 'General Inquiry',
+    subject: '',
+    message: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error: submitError } = await supabase
+        .from('contact_submissions')
+        .insert([{
+          full_name: formData.full_name,
+          email: formData.email,
+          department: formData.department,
+          subject: formData.subject,
+          message: formData.message
+        }]);
+
+      if (submitError) throw submitError;
+
+      setIsSuccess(true);
+      window.scrollTo(0, 0);
+    } catch (err: any) {
+      console.error('Error submitting form:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300 flex flex-col">
+        <div className="flex-grow flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-slate-50 dark:bg-zinc-900 rounded-3xl p-12 text-center">
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Message Sent!</h2>
+            <p className="text-slate-600 dark:text-zinc-400 mb-8">
+              Thank you for contacting us. We've received your message and will get back to you shortly.
+            </p>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="w-full bg-brand-red text-white font-bold py-4 px-8 rounded-xl hover:bg-red-700 transition-all duration-200 shadow-lg shadow-red-500/20"
+            >
+              Return Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        {/* Page Header */}
+        <div className="flex items-center mb-16">
+          <div className="w-1 h-8 bg-brand-red mr-4"></div>
+          <h1 className="text-3xl font-sans font-medium text-slate-900 dark:text-white">
+            Contact us
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-0">
+          
+          {/* Left Column: Contact Details (4 cols) */}
+          <div className="lg:col-span-4 space-y-12 lg:pr-12 lg:border-r lg:border-slate-200 dark:lg:border-zinc-800">
+            
+            {/* Phone */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Phone className="w-5 h-5 text-brand-red" />
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Phone
+                </h2>
+              </div>
+              <p className="text-slate-600 dark:text-zinc-400 text-lg font-medium">1-234-567-8910</p>
+              <p className="text-slate-500 dark:text-zinc-500 mt-1">Monday - Friday</p>
+              <p className="text-slate-500 dark:text-zinc-500">6am — 6pm</p>
+            </div>
+
+            {/* Email */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Mail className="w-5 h-5 text-brand-red" />
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Email
+                </h2>
+              </div>
+              <p className="text-slate-600 dark:text-zinc-400 text-lg font-medium">info@web3instant.com</p>
+              <p className="text-slate-500 dark:text-zinc-500 mt-1">Hear back in about 24 hours.</p>
+            </div>
+
+            {/* Address */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <MapPin className="w-5 h-5 text-brand-red" />
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Address
+                </h2>
+              </div>
+              <p className="text-slate-600 dark:text-zinc-400 text-lg">1234 Kings Street</p>
+              <p className="text-slate-600 dark:text-zinc-400 text-lg">San Francisco, CA 94103</p>
+            </div>
+
+          </div>
+
+          {/* Right Column: Intro Text & Form (8 cols) */}
+          <div className="lg:col-span-8 lg:pl-12">
+            
+            {/* Contact Image */}
+            <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 shadow-lg">
+              <img 
+                src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000" 
+                alt="Contact Web3Instant" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Intro Text */}
+            <div className="prose dark:prose-invert max-w-none space-y-6 mb-12">
+              <p className="text-slate-600 dark:text-zinc-400 text-lg leading-relaxed">
+                Have a story that could make headlines? We want to hear from you. Reach our editorial team at <a href="mailto:content@newsflash.com" className="text-brand-red hover:underline">content@newsflash.com</a>.
+              </p>
+              <p className="text-slate-600 dark:text-zinc-400 text-lg leading-relaxed">
+                For inquiries regarding the rights to reproduce or feature our content, connect with us at <a href="mailto:press@newsflash.com" className="text-brand-red hover:underline">press@newsflash.com</a>.
+              </p>
+              <p className="text-slate-600 dark:text-zinc-400 text-lg leading-relaxed">
+                Interested in advertising or promotional opportunities on NewsFlash? Contact <a href="mailto:press@web3instant.com" className="text-brand-red hover:underline">press@web3instant.com</a> for more details, or you can also contact us via the form below.
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="rounded-3xl p-0 md:p-0">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Get in Touch</h2>
+                <p className="text-slate-600 dark:text-zinc-400">
+                  Whether you need more information, have specific queries or are looking for further assistance, our team is here to help.
+                </p>
+              </div>
+
+              {error && (
+                <div className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3 text-red-600 dark:text-red-400">
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <p className="text-sm">{error}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="full_name"
+                      required
+                      value={formData.full_name}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border-transparent dark:border-zinc-700 focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none transition-all"
+                      placeholder="John Doe"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border-transparent dark:border-zinc-700 focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none transition-all"
+                      placeholder="john@example.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-2">
+                      Department
+                    </label>
+                    <select
+                      name="department"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border-transparent dark:border-zinc-700 focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none transition-all appearance-none"
+                    >
+                      <option value="General Inquiry">General Inquiry</option>
+                      <option value="Editorial">Editorial</option>
+                      <option value="Advertising">Advertising</option>
+                      <option value="Press">Press</option>
+                      <option value="Support">Support</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-2">
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      name="subject"
+                      required
+                      value={formData.subject}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border-transparent dark:border-zinc-700 focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none transition-all"
+                      placeholder="How can we help?"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-2">
+                    Message
+                  </label>
+                  <textarea
+                    name="message"
+                    required
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    rows={6}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border-transparent dark:border-zinc-700 focus:ring-2 focus:ring-brand-red focus:border-transparent outline-none transition-all resize-none"
+                    placeholder="Tell us more..."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-brand-red text-white font-bold py-4 px-8 rounded-xl hover:bg-red-700 transition-all duration-200 shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Submit'
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PartnerBanner lang={lang} />
+      </div>
+      
+    </div>
+  );
+}

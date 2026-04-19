@@ -1,0 +1,39 @@
+{
+  "name": "nosana-eliza-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:@elizaos/core --external:rss-parser",
+    "prestart": "npm run build",
+    "predev": "npm run build",
+    "proxy": "node scripts/llm-proxy.mjs",
+    "start": "elizaos start --character ./characters/agent.character.json",
+    "start:all": "node scripts/llm-proxy.mjs & sleep 2 && elizaos start --character ./characters/agent.character.json",
+    "dev": "elizaos dev --character ./characters/agent.character.json",
+    "frontend:install": "cd frontend && npm install",
+    "frontend:dev": "cd frontend && npx next dev -p 3001",
+    "frontend:build": "cd frontend && npm run build",
+    "dev:all": "npm run proxy & npm run frontend:dev & sleep 3 && npm run dev",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down"
+  },
+  "dependencies": {
+    "@chainpulse/web3journalist": "file:./chainpulse-plugin",
+    "@elizaos/core": "^1.0.0",
+    "@elizaos/plugin-anthropic": "^1.5.12",
+    "@elizaos/plugin-bootstrap": "^1.0.0",
+    "@elizaos/plugin-openai": "^1.0.0",
+    "@elizaos/plugin-telegram": "latest",
+    "@elizaos/plugin-twitter": "latest",
+    "@helius-labs/helius-sdk": "npm:helius-sdk@latest",
+    "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@elizaos/cli": "^1.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.0.0"
+  }
+}
