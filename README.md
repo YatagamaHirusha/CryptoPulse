@@ -2,7 +2,7 @@
 
 CryptoPulse is an AI-powered Web3 news platform that combines:
 
-- an **ElizaOS agent** (`Don Roneth`) for autonomous crypto journalism
+- an **ElizaOS AI journalist agent** for autonomous crypto journalism
 - a **Next.js frontend/CMS** for publishing and reading articles
 - **automation pipelines** for RSS ingestion, rewriting, translation, and social distribution
 
@@ -52,7 +52,7 @@ The frontend (`/frontend`) includes:
 ```text
 RSS + On-chain signals
         ↓
-ElizaOS Agent (Don Roneth)
+ElizaOS AI Journalist Agent
         ↓
 /api/agent/publish (Next.js backend)
         ↓
@@ -144,4 +144,3 @@ npm run dev
 
 - The previous README described the Nosana Builders Challenge template.
 - This README now documents the actual implementation in this repository.
-
